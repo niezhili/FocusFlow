@@ -21,7 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -35,6 +34,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.ui.stats.components.DailyChart
+import com.example.myapplication.ui.stats.components.ChartViewType
 import com.example.myapplication.ui.stats.components.SummaryCard
 import com.example.myapplication.ui.stats.components.TaskDistributionChart
 import kotlinx.coroutines.delay
@@ -67,19 +67,17 @@ fun StatsScreen(
     val tabs = listOf("日", "周", "月")
 
     // ── 下拉刷新 ──
-    var isRefreshing by remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
 
     // 监听下拉手势，触发刷新
     LaunchedEffect(Unit) {
         snapshotFlow { pullToRefreshState.progress }
             .collect { progress ->
-                if (progress >= 1f && !isRefreshing) {
-                    isRefreshing = true
+                if (progress >= 1f && !pullToRefreshState.isRefreshing) {
+                    pullToRefreshState.startRefresh()
                     viewModel.refresh()
-                    // 给一个短暂延迟让用户看到刷新反馈
                     delay(300)
-                    isRefreshing = false
+                    pullToRefreshState.endRefresh()
                 }
             }
     }
@@ -108,7 +106,7 @@ fun StatsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            if (isLoading && !isRefreshing) {
+            if (isLoading && !pullToRefreshState.isRefreshing) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -151,13 +149,22 @@ fun StatsScreen(
                 }
             }
 
-            DailyChart(stats = dailyStats)
+            DailyChart(
+                stats = dailyStats,
+                viewType = when (selectedTabIndex) {
+                    0 -> ChartViewType.DAY
+                    1 -> ChartViewType.WEEK
+                    2 -> ChartViewType.MONTH
+                    else -> ChartViewType.WEEK
+                },
+                taskDistribution = taskDistribution
+            )
 
             TaskDistributionChart(distribution = taskDistribution)
         }
 
         // 下拉刷新指示器
-        if (pullToRefreshState.progress > 0f || isRefreshing) {
+        if (pullToRefreshState.progress > 0f || pullToRefreshState.isRefreshing) {
             PullToRefreshContainer(
                 state = pullToRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter)

@@ -16,12 +16,6 @@ import com.example.myapplication.ui.theme.ThemeMode
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 
-/**
- * Compose 入口辅助函数
- *
- * 为 Java 代码提供调用 Compose setContent 的 Kotlin 桥接
- * 从 DataStore 读取用户主题偏好并应用到 FocusFlowTheme
- */
 fun ComponentActivity.setFocusFlowContent() {
     setContent {
         val context = LocalContext.current
@@ -30,18 +24,21 @@ fun ComponentActivity.setFocusFlowContent() {
         var themeMode by remember { mutableStateOf(ThemeMode.FOLLOW_SYSTEM) }
         var themeColorIndex by remember { mutableIntStateOf(0) }
 
-        DisposableEffect(Unit) {
-            // 订阅主题模式
-            val themeModeDisposable = userPreferences.getThemeMode()
+        DisposableEffect(userPreferences) {
+            val themeModeDisposable = userPreferences.dataStore.data()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { mode -> themeMode = ThemeMode.fromValue(mode) }
+                .subscribe { prefs ->
+                    val mode = prefs[UserPreferences.KEY_THEME_MODE] ?: 0
+                    themeMode = ThemeMode.fromValue(mode)
+                }
 
-            // 订阅主题色
-            val themeColorDisposable = userPreferences.getThemeColor()
+            val themeColorDisposable = userPreferences.dataStore.data()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { color -> themeColorIndex = color }
+                .subscribe { prefs ->
+                    themeColorIndex = prefs[UserPreferences.KEY_THEME_COLOR] ?: 0
+                }
 
             onDispose {
                 themeModeDisposable.dispose()

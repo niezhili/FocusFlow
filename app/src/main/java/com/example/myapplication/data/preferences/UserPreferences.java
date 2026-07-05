@@ -17,13 +17,13 @@ public class UserPreferences {
 
     private static final String PREF_NAME = "focus_flow_settings";
 
-    private final RxDataStore<androidx.datastore.preferences.core.Preferences> dataStore;
+    public final RxDataStore<androidx.datastore.preferences.core.Preferences> dataStore;
 
     // Keys
-    private static final androidx.datastore.preferences.core.Preferences.Key<Integer> KEY_THEME_MODE =
+    public static final androidx.datastore.preferences.core.Preferences.Key<Integer> KEY_THEME_MODE =
             androidx.datastore.preferences.core.PreferencesKeys.intKey("theme_mode");       // 0=亮色 1=暗色 2=跟随系统
 
-    private static final androidx.datastore.preferences.core.Preferences.Key<Integer> KEY_THEME_COLOR =
+    public static final androidx.datastore.preferences.core.Preferences.Key<Integer> KEY_THEME_COLOR =
             androidx.datastore.preferences.core.PreferencesKeys.intKey("theme_color");      // 0-5
 
     private static final androidx.datastore.preferences.core.Preferences.Key<Boolean> KEY_NOTIFICATION_ENABLED =
